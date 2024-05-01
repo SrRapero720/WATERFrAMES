@@ -14,6 +14,8 @@ import me.srrapero720.waterframes.common.compat.creativecore.IScalableText;
 import org.watermedia.api.image.ImageCache;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import org.lwjgl.glfw.GLFW;
 import team.creative.creativecore.common.gui.*;
