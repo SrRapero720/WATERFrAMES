@@ -8,9 +8,9 @@ import me.srrapero720.waterframes.common.block.data.DisplayCaps;
 import me.srrapero720.waterframes.common.block.data.DisplayData;
 import me.srrapero720.waterframes.common.network.DisplayNetwork;
 import me.srrapero720.waterframes.common.network.packets.*;
-import me.srrapero720.watermedia.api.image.ImageAPI;
-import me.srrapero720.watermedia.api.image.ImageCache;
-import me.srrapero720.watermedia.api.math.MathAPI;
+import org.watermedia.api.image.ImageAPI;
+import org.watermedia.api.image.ImageCache;
+import org.watermedia.api.math.MathAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -36,7 +36,7 @@ import static me.srrapero720.waterframes.WaterFrames.LOGGER;
 
 @Mod.EventBusSubscriber(modid = WaterFrames.ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DisplayTile extends BlockEntity {
-    private static long lagTickTime;
+    private static int lagTickTime;
 
     public final DisplayData data;
     public final DisplayCaps caps;
@@ -56,7 +56,7 @@ public class DisplayTile extends BlockEntity {
 
     public static void setLagTickTime(long ltt) {
         if (ltt < 60000) {
-            lagTickTime = ltt / 50L;
+            lagTickTime = (int) (ltt / 50);
         } else {
             LOGGER.warn("Rejected tick correction of {}ms, overpass watchdog time", ltt);
         }
@@ -80,7 +80,7 @@ public class DisplayTile extends BlockEntity {
 
     @OnlyIn(Dist.CLIENT)
     public Display requestDisplay() {
-        if (!this.data.active || (this.data.url.isEmpty() && display != null)) {
+        if (!this.data.active || (this.data.uri == null && display != null)) {
             this.cleanDisplay();
             return null;
         }
@@ -90,8 +90,13 @@ public class DisplayTile extends BlockEntity {
             return null;
         }
 
-        if (this.imageCache == null || !this.imageCache.url.equals(this.data.url)) {
-            this.imageCache = ImageAPI.getCache(this.data.url, Minecraft.getInstance());
+        if (imageCache == null && this.data.uri == null) {
+            this.cleanDisplay();
+            return null;
+        }
+
+        if (this.imageCache == null || (this.data.uri != null && !this.imageCache.uri.equals(this.data.uri))) {
+            this.imageCache = ImageAPI.getCache(this.data.uri, Minecraft.getInstance());
             this.cleanDisplay();
         }
 
@@ -178,7 +183,7 @@ public class DisplayTile extends BlockEntity {
     }
 
     private int getLightLevel$internal() {
-        return  this.data.url.isEmpty() ? 0 : (int) (((float) this.data.brightness / 255f) * level.getMaxLightLevel());
+        return  this.data.uri == null ? 0 : (int) (((float) this.data.brightness / 255f) * level.getMaxLightLevel());
     }
 
     private int getAnalogOutput$internal() {
@@ -229,7 +234,7 @@ public class DisplayTile extends BlockEntity {
         else            DisplayNetwork.sendClient(new TimePacket(this.getBlockPos(), Math.max(data.tick - (5000 / 50), 0), this.data.tickMax, true), this);
     }
 
-    public void syncTime(boolean clientSide, long tick, long maxTick) {
+    public void syncTime(boolean clientSide, int tick, int maxTick) {
         if (clientSide) DisplayNetwork.sendServer(new TimePacket(this.getBlockPos(), tick, maxTick, true));
         else            DisplayNetwork.sendClient(new TimePacket(this.getBlockPos(), tick, maxTick, true), this);
     }
@@ -246,7 +251,7 @@ public class DisplayTile extends BlockEntity {
             if (this.data.tick < this.data.tickMax) {
                 this.data.tick++;
                 if (lagTickTime != 0 && this.isServer()) {
-                    long ticks = this.data.tick + lagTickTime;
+                    int ticks = this.data.tick + lagTickTime;
                     while (ticks > this.data.tickMax) {
                         ticks -= this.data.tickMax;
                     }

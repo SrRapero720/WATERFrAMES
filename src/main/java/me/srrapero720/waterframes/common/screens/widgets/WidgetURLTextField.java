@@ -1,6 +1,7 @@
 package me.srrapero720.waterframes.common.screens.widgets;
 
 import me.srrapero720.waterframes.WFConfig;
+import me.srrapero720.waterframes.WaterFrames;
 import me.srrapero720.waterframes.common.block.data.DisplayData;
 import me.srrapero720.waterframes.common.block.entity.DisplayTile;
 import me.srrapero720.waterframes.common.screens.styles.ScreenStyles;
@@ -12,7 +13,6 @@ import team.creative.creativecore.common.gui.style.GuiStyle;
 import team.creative.creativecore.common.gui.style.display.StyleDisplay;
 import team.creative.creativecore.common.util.text.TextBuilder;
 
-import java.net.URL;
 import java.util.List;
 
 public class WidgetURLTextField extends GuiTextfield {
@@ -21,12 +21,12 @@ public class WidgetURLTextField extends GuiTextfield {
         super(DisplayData.URL);
         this.setMaxStringLength(2048);
         this.setSuggestion("https://i.imgur.com/1yCDs5C.mp4");
-        this.setText(tile.data.url);
+        this.setText(tile.data.uri != null ? tile.data.uri.toString() : "");
     }
 
     @Override
     public StyleDisplay getBorder(GuiStyle style, StyleDisplay display) {
-        return ScreenStyles.BLUE_BORDER;
+        return isUrlValid(this.getText()) ? ScreenStyles.BLUE_BORDER : ScreenStyles.RED_BORDER;
     }
 
     @Override
@@ -51,6 +51,6 @@ public class WidgetURLTextField extends GuiTextfield {
     }
 
     public static boolean isUrlValid(String url) {
-        try { new URL(url); return true; } catch (Exception ignored) { return false; }
+        return WaterFrames.createURI(url) != null;
     }
 }

@@ -4,9 +4,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import me.srrapero720.waterframes.*;
 import me.srrapero720.waterframes.client.rendering.TextureWrapper;
 import me.srrapero720.waterframes.common.block.entity.DisplayTile;
-import me.srrapero720.watermedia.api.image.ImageCache;
-import me.srrapero720.watermedia.api.math.MathAPI;
-import me.srrapero720.watermedia.api.player.SyncVideoPlayer;
+import org.watermedia.api.image.ImageCache;
+import org.watermedia.api.math.MathAPI;
+import org.watermedia.api.network.NetworkAPI;
+import org.watermedia.api.player.videolan.VideoPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
@@ -15,6 +16,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
+import java.net.URI;
 import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
@@ -23,7 +25,7 @@ public class Display {
     private static final Int2ObjectOpenHashMap<ResourceLocation> TEXTURES = new Int2ObjectOpenHashMap<>();
 
     // MEDIA AND DATA
-    private SyncVideoPlayer mediaPlayer;
+    private VideoPlayer mediaPlayer;
     private final ImageCache imageCache;
     private final DisplayTile tile;
     private boolean notVideo;
@@ -40,7 +42,7 @@ public class Display {
         this.tile = tile;
         this.imageCache = tile.imageCache;
         if (this.imageCache.isVideo()) this.switchVideoMode();
-        else this.imageCache.addOnReleaseListener(renderer -> {
+        else this.imageCache.addReleaseCallback(renderer -> {
             for (int tex: renderer.textures) {
                 WFRegistry.unregisterTexture(TEXTURES.remove(tex));
             }
@@ -50,7 +52,6 @@ public class Display {
     private void switchVideoMode() {
         // DO NOT USE VIDEOLAN IF I DONT WANT
         if (!WFConfig.useMultimedia()) {
-            this.displayMode = Mode.PICTURE;
             return;
         }
 
@@ -61,7 +62,7 @@ public class Display {
 
         // START
         this.displayMode = Mode.VIDEO;
-        this.mediaPlayer = new SyncVideoPlayer(Minecraft.getInstance());
+        this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
 
         // CHECK IF VLC CAN BE USED
         if (mediaPlayer.isBroken()) {
@@ -77,14 +78,14 @@ public class Display {
         this.mediaPlayer.setRepeatMode(this.tile.data.loop);
         this.mediaPlayer.setPauseMode(this.tile.data.paused);
         this.mediaPlayer.setMuteMode(this.tile.data.muted);
-        this.mediaPlayer.start(this.tile.data.url, new String[] { ":network-caching=5000" });
+        this.mediaPlayer.start(this.tile.data.uri);
         DisplayList.add(this);
     }
 
     public int width() {
         return switch (displayMode) {
             case PICTURE -> this.imageCache.getRenderer() != null ? this.imageCache.getRenderer().width : 1;
-            case VIDEO -> this.mediaPlayer.getWidth();
+            case VIDEO -> this.mediaPlayer.width();
             case AUDIO -> 0;
         };
     }
@@ -92,7 +93,7 @@ public class Display {
     public int height() {
         return switch (displayMode) {
             case PICTURE -> this.imageCache.getRenderer() != null ? this.imageCache.getRenderer().height : 1;
-            case VIDEO -> this.mediaPlayer.getHeight();
+            case VIDEO -> this.mediaPlayer.height();
             case AUDIO -> 0;
         };
     }
@@ -100,9 +101,18 @@ public class Display {
     public int texture() {
         return switch (displayMode) {
             case PICTURE -> this.imageCache.getRenderer().texture(tile.data.tick, (!tile.data.paused ? MathAPI.tickToMs(WaterFrames.deltaFrames()) : 0), tile.data.loop);
-            case VIDEO -> this.mediaPlayer.getGlTexture();
+            case VIDEO -> this.mediaPlayer.isBroken()
+                    ? this.imageCache.getRenderer().texture(tile.data.tick, (!tile.data.paused ? MathAPI.tickToMs(WaterFrames.deltaFrames()) : 0), tile.data.loop)
+                    : this.mediaPlayer.texture();
             case AUDIO -> 0;
         };
+    }
+
+    public void preRender() {
+        switch (displayMode) {
+            case PICTURE -> {}
+            case VIDEO -> this.mediaPlayer.preRender();
+        }
     }
 
     public ResourceLocation getTextureId() {
@@ -139,7 +149,7 @@ public class Display {
 
     public boolean canRender() {
         return switch (displayMode) {
-            case PICTURE -> this.imageCache.getStatus() == ImageCache.Status.READY && !this.imageCache.isVideo() && tile.data.active;
+            case PICTURE -> (this.imageCache.getStatus() == ImageCache.Status.READY && !this.imageCache.isVideo() && tile.data.active) || notVideo;
             case VIDEO -> this.mediaPlayer.isValid() && tile.data.active;
             case AUDIO -> false;
         };
@@ -156,6 +166,7 @@ public class Display {
                 if (this.imageCache.isVideo() && !this.notVideo) switchVideoMode();
             }
             case VIDEO, AUDIO -> {
+                if (this.mediaPlayer.isBroken()) break;
                 int volume = rangedVol(this.tile.data.volume, this.tile.data.minVolumeDistance, this.tile.data.maxVolumeDistance);
 
                 if (this.currentVolume != volume) this.mediaPlayer.setVolume(this.currentVolume = volume);
@@ -255,7 +266,7 @@ public class Display {
             case PICTURE -> {}
             case VIDEO, AUDIO -> {
                 mediaPlayer.release();
-                WFRegistry.unregisterTexture(TEXTURES.remove(mediaPlayer.getTexture()));
+                WFRegistry.unregisterTexture(TEXTURES.remove(mediaPlayer.texture()));
                 DisplayList.remove(this);
             }
         }

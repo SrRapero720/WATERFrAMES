@@ -17,6 +17,9 @@ import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.net.URI;
+
 @Mod(WaterFrames.ID)
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = WaterFrames.ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class WaterFrames {
@@ -25,7 +28,7 @@ public class WaterFrames {
     public static final Logger LOGGER = LogManager.getLogger(ID);
     public static final ResourceLocation LOADING_ANIMATION = WaterFrames.asResource("loading_animation");
     public static final long SYNC_TIME = 1000L;
-    private static long ticks = 0;
+    private static int ticks = 0;
 
     // BOOTSTRAP
     public WaterFrames() {
@@ -43,6 +46,19 @@ public class WaterFrames {
 
     public static boolean isInstalled(String modId) {
         return FMLLoader.getLoadingModList().getModFileById(modId) != null;
+    }
+
+    public static URI createURI(String s) {
+        File f = new File(s);
+        // accept local paths as file uris
+        if (!f.isDirectory() && f.exists())
+            return new File(s).toURI();
+
+        try {
+            return new URI(s);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static boolean isInstalled(String... mods) {
@@ -72,11 +88,11 @@ public class WaterFrames {
 
     @OnlyIn(Dist.CLIENT)
     public static void tick() {
-        if (++ticks == Long.MAX_VALUE) ticks = 0;
+        if (++ticks == Integer.MAX_VALUE) ticks = 0;
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static long getTicks() {
+    public static int getTicks() {
         return ticks;
     }
 
