@@ -1,12 +1,14 @@
 package me.srrapero720.waterframes.client.display;
 
+import com.sun.jna.Pointer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import me.srrapero720.waterframes.*;
 import me.srrapero720.waterframes.client.rendering.TextureWrapper;
 import me.srrapero720.waterframes.common.block.entity.DisplayTile;
+import org.lwjgl.openal.AL10;
 import org.watermedia.api.image.ImageCache;
 import org.watermedia.api.math.MathAPI;
-import org.watermedia.api.network.NetworkAPI;
+import org.watermedia.api.player.PlayerAPI;
 import org.watermedia.api.player.videolan.VideoPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -15,14 +17,21 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.watermedia.videolan4j.factory.MediaPlayerFactory;
+import org.watermedia.videolan4j.player.base.MediaPlayer;
+import org.watermedia.videolan4j.player.base.callback.AudioCallback;
 
-import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
 public class Display {
+    private static final int SAMPLE_RATE = 44100;
+    private static final int CHANNELS = 2;
     private static final Marker IT = MarkerManager.getMarker("Display");
     private static final Int2ObjectOpenHashMap<ResourceLocation> TEXTURES = new Int2ObjectOpenHashMap<>();
+
+    private static final MediaPlayerFactory FACTORY = PlayerAPI.registerFactory("waterframes:custom_factory", new String[]{"--aout=waveout"});
 
     // MEDIA AND DATA
     private VideoPlayer mediaPlayer;
@@ -32,6 +41,9 @@ public class Display {
 
     // CONFIG
     private int currentVolume = 0;
+    private final int source = AL10.alGenSources();
+    private final int[] buffers = new int[4];
+    private int bufferIndex = 0;
     private long currentLastTime = Long.MIN_VALUE;
     private Mode displayMode = Mode.PICTURE;
     private boolean stream = false;
@@ -63,7 +75,7 @@ public class Display {
 
         // START
         this.displayMode = Mode.VIDEO;
-        this.mediaPlayer = new VideoPlayer(Minecraft.getInstance());
+        this.mediaPlayer = new VideoPlayer(FACTORY, Minecraft.getInstance());
 
         // CHECK IF VLC CAN BE USED
         if (mediaPlayer.isBroken()) {
@@ -74,12 +86,69 @@ public class Display {
 
         this.currentVolume = rangedVol(this.tile.data.volume, this.tile.data.minVolumeDistance, this.tile.data.maxVolumeDistance);
 
+        AL10.alGenBuffers(buffers);
+
         // PLAYER CONFIG
         this.mediaPlayer.setVolume(this.currentVolume);
         this.mediaPlayer.setRepeatMode(this.tile.data.loop);
         this.mediaPlayer.setPauseMode(this.tile.data.paused);
         this.mediaPlayer.setMuteMode(this.tile.data.muted);
         this.mediaPlayer.start(this.tile.data.uri);
+
+        this.mediaPlayer.raw().mediaPlayer().audio().callback("S16N", SAMPLE_RATE, CHANNELS, new AudioCallback() {
+            @Override
+            public void play(MediaPlayer mediaPlayer, Pointer samples, int sampleCount, long pts) {
+                // READ
+                ByteBuffer data = samples.getByteBuffer(0L, sampleCount * 4L);
+
+                // PREPARE
+                int buffer;
+                if (bufferIndex < buffers.length) {
+                    buffer = buffers[bufferIndex++];
+                } else {
+                    int processed = AL10.alGetSourcei(source, AL10.AL_BUFFERS_PROCESSED);
+                    while (processed <= 0) {
+                        processed = AL10.alGetSourcei(source, AL10.AL_BUFFERS_PROCESSED);
+                    }
+                    buffer = AL10.alSourceUnqueueBuffers(source);
+                }
+                AL10.alBufferData(buffer, AL10.AL_FORMAT_STEREO16, data, SAMPLE_RATE);
+                AL10.alSourceQueueBuffers(source, buffer);
+
+                if (AL10.alGetSourcei(source, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
+                    AL10.alSourcePlay(source);
+                }
+            }
+
+            @Override
+            public void pause(MediaPlayer mediaPlayer, long l) {
+                if (AL10.alGetSourcei(source, AL10.AL_SOURCE_STATE) != AL10.AL_PAUSED) {
+                    AL10.alSourcePause(source);
+                }
+            }
+
+            @Override
+            public void resume(MediaPlayer mediaPlayer, long l) {
+                if (AL10.alGetSourcei(source, AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
+                    AL10.alSourcePlay(source);
+                }
+            }
+
+            @Override
+            public void flush(MediaPlayer mediaPlayer, long l) {
+
+            }
+
+            @Override
+            public void drain(MediaPlayer mediaPlayer) {
+
+            }
+
+            @Override
+            public void setVolume(float v, boolean b) {
+//                AL10.alSourcef(source, AL10.AL_GAIN, v);
+            }
+        }, true);
         DisplayList.add(this);
     }
 
