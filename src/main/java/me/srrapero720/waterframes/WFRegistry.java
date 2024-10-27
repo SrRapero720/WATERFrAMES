@@ -162,7 +162,7 @@ public class WFRegistry {
         @OnlyIn(Dist.CLIENT)
         public static void init(FMLClientSetupEvent e) {
             LOGGER.info(IT, "Running WATERFrAMES v{}", ModList.get().getModFileById(ID).versionString());
-            if (WaterFrames.isInstalled("mr_stellarity", "stellarity") && (WFConfig.isDevMode())) {
+            if (WaterFrames.isInstalled("mr_stellarity", "stellarity") && !WFConfig.isDevMode()) {
                 throw new UnsupportedModException("mr_stellarity (Stellarity)", "breaks picture rendering, overwrites Minecraft core shaders and isn't possible work around that");
             }
         }
