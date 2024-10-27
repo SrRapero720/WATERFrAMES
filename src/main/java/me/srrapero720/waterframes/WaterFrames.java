@@ -64,10 +64,10 @@ public class WaterFrames {
     public static boolean isInstalled(String... mods) {
         for (String id: mods) {
             if (FMLLoader.getLoadingModList().getModFileById(id) == null) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     public static double getDistance(DisplayTile tile, Position playerPos) {
