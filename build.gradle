@@ -59,20 +59,7 @@ repositories {
     maven {
         url 'https://www.cursemaven.com'
         content {
-            includeGroup "curse.maven"
-        }
-    }
-    // REMOVE THIS SHIT WHEN GOEDIX RELEASED VIDEOPLAYER ON CURSEFORGE
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
-            }
-        }
-        forRepositories(fg.repository) // Only add this if you're using ForgeGradle, otherwise remove this line
-        filter {
-            includeGroup "maven.modrinth"
+            includeGroup 'curse.maven'
         }
     }
 }
@@ -83,8 +70,8 @@ dependencies {
 
     //DEPENDENCIES
     implementation "com.github.WaterMediaTeam.watermedia:build:$watermediaversion"
-    compileOnly fg.deobf("maven.modrinth:video-player:$videoplayerversion")
     implementation fg.deobf("curse.maven:creativecore-257814:${creativecoreversion}")
+    compileOnly fg.deobf("curse.maven:videoplayer-645407:$videoplayerversion")
 }
 
 tasks.processResources.outputs.upToDateWhen { false }
@@ -121,15 +108,15 @@ task curseforge(type: TaskPublishCurseForge) {
     apiToken = System.getenv("CURSEFORGE_TOKEN")
 
     def mainFile = upload(curseforgeid, jar)
-    mainFile.displayName = "$modbrandname/${modloader.toLowerCase().capitalize()}/mc$mcversion/v$modversion"
+    mainFile.displayName = getVersionBuildName()
     mainFile.addModLoader(modloader.toLowerCase().capitalize())
     mainFile.addGameVersion(mcversion, "server", "client")
     mainFile.addRequirement("creativecore", "watermedia")
+    mainFile.addOptional("video-player")
     mainFile.addIncompatibility("stellarity")
     mainFile.changelog = getChangelogText(false)
     mainFile.changelogType = "markdown"
     mainFile.releaseType = versiontype
-
 }
 
 modrinth {
@@ -137,7 +124,7 @@ modrinth {
     projectId = modrinthid
 
     uploadFile = jar
-    versionName = "$modbrandname/${modloader.toLowerCase().capitalize()}/mc$mcversion/v$modversion"
+    versionName = getVersionBuildName()
     versionNumber = version.toString()
     versionType = versiontype
     gameVersions = [ mcversion ]
@@ -146,8 +133,13 @@ modrinth {
     dependencies {
         required.project "creativecore"
         required.project "watermedia"
+        optional.project "videoplayer"
         incompatible.project "stellarity"
     }
+}
+
+String getVersionBuildName() {
+    return "$modbrandname/${modloader.toLowerCase().capitalize()}/mc$mcversion/v$modversion"
 }
 
 String getChangelogText(boolean latest) {
