@@ -63,9 +63,12 @@
     "waterframes.status.off": "Off",
     "waterframes.status.off.desc": "Click save to turn on",
     "waterframes.status.operative": "Working",
-    "waterframes.status.loading": "Loading",
+    "waterframes.status.loading": "Loading...",
+    "waterframes.status.buffering": "Buffering...",
     "waterframes.status.idle": "Idle",
+    "waterframes.status.idle.desc": "Put any URL to start",
     "waterframes.status.failed": "Failed to load",
+    "waterframes.status.failed.video": "Failed to open video",
     "waterframes.status.not_working": "Something wrong happened",
     "waterframes.status.cache": "Loaded from cache",
 
