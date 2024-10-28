@@ -25,6 +25,7 @@ import team.creative.creativecore.common.gui.parser.LongValueParser;
 import team.creative.creativecore.common.gui.style.ControlFormatting;
 import team.creative.creativecore.common.gui.style.GuiStyle;
 import team.creative.creativecore.common.gui.style.display.StyleDisplay;
+import team.creative.creativecore.common.util.math.geo.Rect;
 import team.creative.creativecore.common.util.type.Color;
 
 import java.math.BigDecimal;
@@ -47,7 +48,7 @@ public class DisplayScreen extends GuiLayer {
     private final GuiIcon rot_i = (GuiIcon) new GuiIcon("r_icon", IconStyles.ROTATION).setSquared(true).setTooltip("waterframes.gui.icon.rotation");
     private final GuiIcon vis_i = (GuiIcon) new GuiIcon("t_icon", IconStyles.TRANSPARENCY).setSquared(true).setTooltip("waterframes.gui.icon.alpha");
     private final GuiIcon bright_i = (GuiIcon) new GuiIcon("b_icon", IconStyles.BRIGHTNESS).setSquared(true).setTooltip("waterframes.gui.icon.brightness");
-    private final GuiIcon render_i = (GuiIcon) new GuiIcon("r_icon", IconStyles.DISTANCE).setSquared(true).setTooltip("waterframes.gui.icon.render_distance");
+    private final GuiIcon render_i = (GuiIcon) new GuiIcon("r_icon", IconStyles.RENDER_DISTANCE).setSquared(true).setTooltip("waterframes.gui.icon.render_distance");
     private final GuiIcon project_i = (GuiIcon) new GuiIcon("pd_icon",  IconStyles.PROJECTION_DISTANCE).setSquared(true).setTooltip("waterframes.gui.icon.projection_distance");
     private final GuiIcon vol_i = (GuiIcon) new GuiIcon("v_icon", IconStyles.VOLUME).setSquared(true).setTooltip("waterframes.gui.icon.volume");
     private final GuiIcon vol_min_i = (GuiIcon) new GuiIcon("v_min_icon", IconStyles.VOLUME_RANGE_MIN).setSquared(true).setTooltip("waterframes.gui.icon.volume_min");
@@ -77,7 +78,7 @@ public class DisplayScreen extends GuiLayer {
     public final GuiStateButtonIcon audio_offset;
 
     public final GuiButtonIcon reload;
-    public GuiControl seekbar;
+    public final GuiSeekBar seekbar;
 
     public final GuiButtonIcon videoplayer;
 
@@ -153,7 +154,17 @@ public class DisplayScreen extends GuiLayer {
         this.volume_max = new GuiSteppedSlider(DisplayData.VOL_RANGE_MAX, tile.data.maxVolumeDistance, 0, WFConfig.maxVolDis(), IntValueParser.BLOCKS);
         this.volume_max.setMinSlider(this.volume_min);
 
-        this.seekbar = new GuiSeekBar("seek", () -> tile.data.tick, () -> tile.data.tickMax, LongValueParser.TIME_DURATION_TICK)
+        this.seekbar = new GuiSeekBar("seek", () -> tile.data.tick, () -> tile.data.tickMax, LongValueParser.TIME_DURATION_TICK) {
+            @Override
+            public boolean mouseScrolled(Rect rect, double x, double y, double scrolled) {
+                if (scrolled > 0.0f) {
+                    tile.fastFoward(true);
+                } else {
+                    tile.rewind(true);
+                }
+                return true;
+            }
+        }
                 .setOnTimeUpdate(v -> tile.data.tick = (int) v)
                 .setOnLastTimeUpdate(v -> tile.syncTime(true, (int) v, tile.data.tickMax));
 
