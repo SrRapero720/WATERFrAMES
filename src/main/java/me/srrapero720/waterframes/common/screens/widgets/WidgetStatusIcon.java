@@ -6,6 +6,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.watermedia.api.player.PlayerAPI;
 import team.creative.creativecore.common.gui.controls.simple.GuiIcon;
 import team.creative.creativecore.common.gui.style.Icon;
 
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WidgetStatusIcon extends GuiIcon {
+    Icon lastIcon;
 
     private final DisplayTile tile;
     public WidgetStatusIcon(String name, Icon icon, DisplayTile tile) {
@@ -36,26 +38,37 @@ public class WidgetStatusIcon extends GuiIcon {
             tooltip.add(translatable("waterframes.status.off.desc"));
             return tooltip;
         }
+
+        if (tile.imageCache == null && tile.data.uri == null) {
+            tooltip.add(translatable("waterframes.status", ChatFormatting.AQUA + translate("waterframes.status.idle")));
+            tooltip.add(translatable("waterframes.status.idle.desc"));
+            return tooltip;
+        }
+
+        // assuming it was
         if (tile.imageCache == null) {
-            tooltip.add(translatable("waterframes.status", ChatFormatting.RED + translate("waterframes.status.failed")));
+            tooltip.add(translatable("waterframes.status", ChatFormatting.RED + translate("waterframes.status.loading")));
             return tooltip;
         }
         var status = switch (tile.imageCache.getStatus()) {
-            case READY -> ChatFormatting.GREEN + translate("waterframes.status.operative");
-            case LOADING -> ChatFormatting.AQUA + translate("waterframes.status.loading");
-            case FAILED -> ChatFormatting.RED + translate("waterframes.download.exception.invalid");
-            case WAITING, FORGOTTEN -> {
-                if (tile.imageCache.uri == null)
-                    yield ChatFormatting.AQUA + translate("waterframes.status.idle");
-                else {
-                    Exception e = tile.imageCache.getException();
-                    if (e != null) {
-                        yield ChatFormatting.DARK_RED + tile.imageCache.getException().getLocalizedMessage();
-                    } else {
-                        yield ChatFormatting.DARK_RED + translate("waterframes.status.not_working");
-                    }
+            case READY -> {
+                if (tile.imageCache.isVideo()) {
+                    if (!PlayerAPI.isReady())
+                        yield ChatFormatting.RED + translate("waterframes.status.failed.video");
+                    if (tile.display != null && tile.display.isBuffering())
+                        yield ChatFormatting.YELLOW + translate("waterframes.status.buffering");
                 }
+                yield ChatFormatting.GREEN + translate("waterframes.status.operative");
             }
+            case LOADING, WAITING -> ChatFormatting.YELLOW + translate("waterframes.status.loading");
+            case FAILED -> {
+                Exception e = tile.imageCache.getException();
+                if (e != null) {
+                    yield ChatFormatting.DARK_RED + tile.imageCache.getException().getLocalizedMessage();
+                }
+                yield ChatFormatting.RED + translate("waterframes.download.exception.invalid");
+            }
+            case FORGOTTEN -> ChatFormatting.DARK_RED + translate("waterframes.status.not_working");
         };
         tooltip.add(translatable("waterframes.status", status));
         if (tile.imageCache.isCache()) {
@@ -68,12 +81,22 @@ public class WidgetStatusIcon extends GuiIcon {
     @OnlyIn(Dist.CLIENT)
     public Icon getStatusIcon() {
         if (!tile.data.active) return IconStyles.STATUS_OFF;
-        if (tile.imageCache == null) return IconStyles.STATUS_ERROR;
+        if (tile.imageCache == null && tile.data.uri == null) return IconStyles.STATUS_IDLE;
+        else if (tile.imageCache == null) return IconStyles.STATUS_LOADING; // ASSUMING IT WAS LOADING
         return switch (tile.imageCache.getStatus()) {
-            case READY -> tile.imageCache.isCache() ? IconStyles.STATUS_OK_CACHE : IconStyles.STATUS_OK;
-            case LOADING -> IconStyles.STATUS_WARN;
+            case READY -> {
+                if (tile.imageCache.isVideo()) {
+                    if (!PlayerAPI.isReady())
+                        yield IconStyles.STATUS_INTERNAL_ERROR_2;
+                    if (tile.display != null && (tile.display.isBuffering()))
+                        yield IconStyles.STATUS_BUFFERING;
+                }
+
+                yield tile.imageCache.isCache() ? IconStyles.STATUS_OK_CACHE : IconStyles.STATUS_OK;
+            }
+            case LOADING, WAITING -> IconStyles.STATUS_LOADING;
             case FAILED -> IconStyles.STATUS_ERROR;
-            case WAITING, FORGOTTEN -> tile.imageCache.uri == null ? IconStyles.STATUS_IDLE : IconStyles.STATUS_ERROR;
+            case FORGOTTEN -> lastIcon == null ? IconStyles.STATUS_WARN : lastIcon;
         };
     }
 }

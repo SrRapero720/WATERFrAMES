@@ -6,7 +6,6 @@ import me.srrapero720.waterframes.client.rendering.TextureWrapper;
 import me.srrapero720.waterframes.common.block.entity.DisplayTile;
 import org.watermedia.api.image.ImageCache;
 import org.watermedia.api.math.MathAPI;
-import org.watermedia.api.network.NetworkAPI;
 import org.watermedia.api.player.videolan.VideoPlayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -15,8 +14,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
+import org.watermedia.videolan4j.player.base.State;
 
-import java.net.URI;
 import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
@@ -212,7 +211,7 @@ public class Display {
     public boolean isBuffering() {
         return switch (displayMode) {
             case PICTURE -> false;
-            case VIDEO, AUDIO -> this.mediaPlayer.isBuffering() || this.mediaPlayer.isLoading();
+            case VIDEO, AUDIO -> this.mediaPlayer.isBuffering() || this.mediaPlayer.isLoading() || this.mediaPlayer.raw().mediaPlayer().status().state() == State.NOTHING_SPECIAL;
         };
     }
 
