@@ -81,10 +81,10 @@ public class DisplayRenderer implements BlockEntityRenderer<DisplayTile> {
             this.vertex(pose, bufferSource, getLoadingBox(tile, box, facing), boxFace, facing, packedLight, packedOverlay,
                     front, back, flipX, flipY, r, g, b, a, WaterFrames.LOADING_ANIMATION);
         } else if (display.canRender()) {
-            int tex = display.texture();
-            if (tex != -1) {
+            var tex = display.getTextureId();
+            if (tex != null) {
                 this.vertex(pose, bufferSource, box, boxFace, facing, packedLight, packedOverlay,
-                        front, back, flipX, flipY, r, g, b, a, display.getTextureId());
+                        front, back, flipX, flipY, r, g, b, a, tex);
             }
 
             if (display.isBuffering()) {

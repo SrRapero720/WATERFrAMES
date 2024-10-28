@@ -51,7 +51,6 @@ public class Display {
     private void switchVideoMode() {
         // DO NOT USE VIDEOLAN IF I DONT WANT
         if (!WFConfig.useMultimedia()) {
-            this.displayMode = Mode.PICTURE;
             return;
         }
 
@@ -101,7 +100,9 @@ public class Display {
     public int texture() {
         return switch (displayMode) {
             case PICTURE -> this.imageCache.getRenderer().texture(tile.data.tick, (!tile.data.paused ? MathAPI.tickToMs(WaterFrames.deltaFrames()) : 0), tile.data.loop);
-            case VIDEO -> this.mediaPlayer.texture();
+            case VIDEO -> this.mediaPlayer.isBroken()
+                    ? this.imageCache.getRenderer().texture(tile.data.tick, (!tile.data.paused ? MathAPI.tickToMs(WaterFrames.deltaFrames()) : 0), tile.data.loop)
+                    : this.mediaPlayer.texture();
             case AUDIO -> 0;
         };
     }
@@ -147,7 +148,7 @@ public class Display {
 
     public boolean canRender() {
         return switch (displayMode) {
-            case PICTURE -> this.imageCache.getStatus() == ImageCache.Status.READY && !this.imageCache.isVideo() && tile.data.active;
+            case PICTURE -> (this.imageCache.getStatus() == ImageCache.Status.READY && !this.imageCache.isVideo() && tile.data.active) || notVideo;
             case VIDEO -> this.mediaPlayer.isValid() && tile.data.active;
             case AUDIO -> false;
         };
@@ -164,6 +165,7 @@ public class Display {
                 if (this.imageCache.isVideo() && !this.notVideo) switchVideoMode();
             }
             case VIDEO, AUDIO -> {
+                if (this.mediaPlayer.isBroken()) break;
                 int volume = rangedVol(this.tile.data.volume, this.tile.data.minVolumeDistance, this.tile.data.maxVolumeDistance);
 
                 if (this.currentVolume != volume) this.mediaPlayer.setVolume(this.currentVolume = volume);
