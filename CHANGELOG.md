@@ -1,3 +1,6 @@
+# UPDATE 2.1.7a
+- 🐛 Fixed crashes when stellarity wasn't installed (it was supposted to be when is installed)
+
 # UPDATE 2.1.7
 - 🛠️ Updated to WaterMedia 2.1.x
 - ✨ Added new status icons (Media loading error, buffering, warning, success via cache)
