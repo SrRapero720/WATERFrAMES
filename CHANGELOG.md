@@ -1,3 +1,10 @@
+# UPDATE 2.1.7
+- 🛠️ Updated to WaterMedia 2.1.x
+- ✨ Added new status icons (Media loading error, buffering, warning, success via cache)
+- ✨ Added back red URL input when URL is wrong (for local files, will appear red if file doesn't exist)
+- ✨ Scrolling on the seekbar will fastfoward or rewind the time (5 seconds)
+- ✨ Fixed "VLC fail to load" banner doesn't show up when VLC fails  
+
 # UPDATE 2.1.6
 - 🐛 Fixed crashes on newer versions of CreativeCore 
 
