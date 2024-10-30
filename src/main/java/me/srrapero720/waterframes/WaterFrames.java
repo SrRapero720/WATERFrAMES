@@ -63,7 +63,7 @@ public class WaterFrames {
 
     public static boolean isInstalled(String... mods) {
         for (String id: mods) {
-            if (FMLLoader.getLoadingModList().getModFileById(id) == null) {
+            if (FMLLoader.getLoadingModList().getModFileById(id) != null) {
                 return true;
             }
         }
