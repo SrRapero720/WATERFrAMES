@@ -1,3 +1,6 @@
+# UPDATE 2.1.7b
+- 🐛 Fixed crashes due to requesting watermedia classes on server-side
+
 # UPDATE 2.1.7
 - 🛠️ Updated to WaterMedia 2.1.x
 - ✨ Added new status icons (Media loading error, buffering, warning, success via cache)

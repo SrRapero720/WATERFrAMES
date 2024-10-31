@@ -13,17 +13,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 
 import java.io.File;
 import java.net.URI;
-
-import static org.watermedia.WaterMedia.IT;
 
 public class WaterFrames implements ModInitializer {
     // TOOLS
     public static final String ID = "waterframes";
     public static final String NAME = "WATERFrAMES";
     public static final Logger LOGGER = LogManager.getLogger(ID);
+    private static final Marker IT = MarkerManager.getMarker(ID);
     public static final ResourceLocation LOADING_ANIMATION = WaterFrames.asResource("loading_animation");
     public static final long SYNC_TIME = 1000L;
     private static int ticks = 0;
