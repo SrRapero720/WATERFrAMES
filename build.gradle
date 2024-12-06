@@ -109,7 +109,7 @@ task curseforge(type: TaskPublishCurseForge) {
 
     def mainFile = upload(curseforgeid, jar)
     mainFile.displayName = getVersionBuildName()
-    mainFile.addModLoader(modloader.toLowerCase().capitalize())
+    mainFile.addModLoader(modloader.toLowerCase().capitalize(), "NeoForge")
     mainFile.addGameVersion(mcversion, "server", "client")
     mainFile.addRequirement("creativecore", "watermedia")
     mainFile.addOptional("video-player")
