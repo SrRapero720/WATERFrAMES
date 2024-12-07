@@ -1,3 +1,33 @@
+# UPDATE 2.1.8
+- 🌐 Added translation
+  - 🇧🇷 Brazil (by jmsgfhr)
+- ✨ [1.19.2] Extended support for 2 months (QianFuv)
+- ✨ Added compatibility with Forge Permissions API
+  - ✨ Added config option to enable permission usage (disabled by default)
+  - ✨ Permissions added
+    - `waterframes.displays.save`: Enables you save urls or settings in any display
+    - `waterframes.displays.interact`: Enables you interaction for any display (open gui)
+    - `waterframes.displays.interact.frame`: Enables you interaction for frames
+    - `waterframes.displays.interact.projector`: Enables you interaction for projectors
+    - `waterframes.displays.interact.tv`: Enables you interaction for all TVs
+    - `waterframes.remote.interact`: Enables you interact with remotes (open gui)
+    - `waterframes.remote.bind`: Enables you binding remotes (open gui)
+    - `waterframes.whitelist.bypass`: Enables you ability to bypass white/black list
+- ✨ Added config "allowSaving", enables to users ability to save urls or settings
+- ✨ Added config "blackWhitelist", inverts polarity of how a whitelist works
+- ✨ Added config "usableRemote", enables to users ability to interact with the remote (open the gui)
+- ✨ Added config "usableRemoteBinding", enables to users ability to bind remotes on any display
+- ✨ Added sound on binding and unbinding remotes
+- 🛠️ Added validator for whitelist hosts (invalid host must be removed)
+- 🛠️ Added better error displaying when URL isn't able to load
+- 🛠️ Set minimal required watermedia version to 2.1.6
+- 🐛 Fixed users aren't able to save on any display when URL bar is empty
+- 🐛 Fixed when permission to interact with displays isn't enabled, remotes aren't able to bind them
+- 🐛 Fixed update display data resets time to zero when it has an URL
+- 🐛 Fixed you won't need to crouch to bind unbinded remotes
+- 🐛 Fixed mute button is not visible on remotes
+- 🐛 Fixed audio position is displayed wronly on projectors
+
 # UPDATE 2.1.7a
 - 🐛 Fixed crashes when stellarity wasn't installed (it was supposted to be when is installed)
 
