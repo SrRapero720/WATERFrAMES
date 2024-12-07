@@ -23,6 +23,9 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.Marker;
@@ -102,7 +105,7 @@ public class RemoteControl extends Item implements ItemGuiCreator {
         var level = context.getLevel();
         var player = context.getPlayer();
 
-        if (player == null || context.getHand() == InteractionHand.OFF_HAND || !context.getItemInHand().getOrCreateTag().isEmpty()) {
+        if (player == null || context.getHand() == InteractionHand.OFF_HAND || !context.getItemInHand().getOrCreateTag().isEmpty() || !player.isCrouching()) {
             return InteractionResult.PASS;
         }
 
@@ -127,15 +130,24 @@ public class RemoteControl extends Item implements ItemGuiCreator {
     }
 
     private void sendSuccess(Player player, MutableComponent component) {
-        if (player.level.isClientSide) player.displayClientMessage(component.withStyle(ChatFormatting.AQUA), true);
+        if (player.level.isClientSide) {
+            player.displayClientMessage(component.withStyle(ChatFormatting.AQUA), true);
+            player.playSound(NoteBlockInstrument.BELL.getSoundEvent().get(), 1.0f, 1.25f);
+        }
     }
 
     private void sendFailed(Player player, MutableComponent component) {
-        if (player.level.isClientSide) player.displayClientMessage(component.withStyle(ChatFormatting.RED), true);
+        if (player.level.isClientSide) {
+            player.displayClientMessage(component.withStyle(ChatFormatting.RED), true);
+            player.playSound(NoteBlockInstrument.HARP.getSoundEvent().get(), 1.0f, 0.75f);
+        }
     }
 
     private void sendFatal(Player player, MutableComponent component) {
-        if (player.level.isClientSide) player.displayClientMessage(component.withStyle(ChatFormatting.DARK_RED), true);
+        if (player.level.isClientSide) {
+            player.displayClientMessage(component.withStyle(ChatFormatting.DARK_RED), true);
+            player.playSound(NoteBlockInstrument.HARP.getSoundEvent().get(), 1.0f, 0.5f);
+        }
     }
 
     public boolean hasPosition(CompoundTag tag) {
