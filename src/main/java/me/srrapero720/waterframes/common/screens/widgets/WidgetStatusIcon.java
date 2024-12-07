@@ -62,9 +62,16 @@ public class WidgetStatusIcon extends GuiIcon {
             }
             case LOADING, WAITING -> ChatFormatting.YELLOW + translate("waterframes.status.loading");
             case FAILED -> {
-                Exception e = tile.imageCache.getException();
+                Throwable e = tile.imageCache.getException();
                 if (e != null) {
-                    yield ChatFormatting.DARK_RED + tile.imageCache.getException().getLocalizedMessage();
+                    if (e.getLocalizedMessage() != null && !e.getLocalizedMessage().isEmpty())
+                        yield ChatFormatting.DARK_RED + e.getLocalizedMessage();
+                    if (e.getCause() != null && e.getCause().getLocalizedMessage() != null && !e.getCause().getLocalizedMessage().isEmpty())
+                        yield ChatFormatting.DARK_RED + e.getCause().getLocalizedMessage();
+                    if (e.getCause() != null)
+                        e = e.getCause();
+
+                    yield ChatFormatting.DARK_RED + e.getClass().getSimpleName();
                 }
                 yield ChatFormatting.RED + translate("waterframes.download.exception.invalid");
             }
@@ -83,6 +90,7 @@ public class WidgetStatusIcon extends GuiIcon {
         if (!tile.data.active) return IconStyles.STATUS_OFF;
         if (tile.imageCache == null && !tile.data.hasUri()) return IconStyles.STATUS_IDLE;
         else if (tile.imageCache == null) return IconStyles.STATUS_LOADING; // ASSUMING IT WAS LOADING
+
         return switch (tile.imageCache.getStatus()) {
             case READY -> {
                 if (tile.imageCache.isVideo()) {
