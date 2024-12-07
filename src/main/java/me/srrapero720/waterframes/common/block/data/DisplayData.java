@@ -84,13 +84,14 @@ public class DisplayData {
     public float projectionDistance = WFConfig.maxProjDis(8f);
     public float audioOffset = 0;
 
+    public boolean hasUri() { return this.uri != null; }
     public PositionHorizontal getPosX() { return this.min.x == 0 ? PositionHorizontal.LEFT : this.max.x == 1 ? PositionHorizontal.RIGHT : PositionHorizontal.CENTER; }
     public PositionVertical getPosY() { return this.min.y == 0 ? PositionVertical.TOP : this.max.y == 1 ? PositionVertical.BOTTOM : PositionVertical.CENTER; }
     public float getWidth() { return this.max.x - this.min.x; }
     public float getHeight() { return this.max.y - this.min.y; }
 
     public void save(CompoundTag nbt, DisplayTile tile) {
-        nbt.putString(URL, uri == null ? "" : uri.toString());
+        nbt.putString(URL, !hasUri() ? "" : uri.toString());
         nbt.putUUID(PLAYER_UUID, uuid);
         nbt.putBoolean(ACTIVE, active);
         if (tile.caps.resizes()) {
@@ -341,12 +342,12 @@ public class DisplayData {
         String url = nbt.getString(URL);
         if (WFConfig.canSave(player, url)) {
             final URI uri = WaterFrames.createURI(url);
-            if (tile.data.uri == null || tile.data.uri.equals(uri)) {
+            if (!tile.data.hasUri() || !tile.data.uri.equals(uri)) {
                 tile.data.tick = 0;
                 tile.data.tickMax = -1;
             }
             tile.data.uri = uri;
-            tile.data.uuid = tile.data.uri != null ? player.getUUID() : Util.NIL_UUID;
+            tile.data.uuid = tile.data.hasUri() ? player.getUUID() : Util.NIL_UUID;
             tile.data.active = nbt.getBoolean(ACTIVE);
 
             if (tile.caps.resizes()) {

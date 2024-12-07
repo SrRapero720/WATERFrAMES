@@ -400,11 +400,11 @@ public class DisplayScreen extends GuiLayer {
     }
 
     public boolean enableVideoPlayer() {
-        return tile.data.uri != null && tile.imageCache != null && tile.imageCache.getStatus() == ImageCache.Status.READY;
+        return tile.data.hasUri() && tile.imageCache != null && tile.imageCache.getStatus() == ImageCache.Status.READY;
     }
 
     public boolean enableReload() {
-        return tile.imageCache != null && !this.url.getText().isEmpty() && tile.data.uri != null && tile.data.uri.equals(WaterFrames.createURI(this.url.getText()));
+        return tile.imageCache != null && !this.url.getText().isEmpty() && tile.data.hasUri() && tile.data.uri.equals(WaterFrames.createURI(this.url.getText()));
     }
 
     @Override

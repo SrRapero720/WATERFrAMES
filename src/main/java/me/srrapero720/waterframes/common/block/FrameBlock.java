@@ -1,5 +1,6 @@
 package me.srrapero720.waterframes.common.block;
 
+import me.srrapero720.waterframes.WFRegistry;
 import me.srrapero720.waterframes.common.block.entity.FrameTile;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import org.jetbrains.annotations.NotNull;
 import team.creative.creativecore.common.util.math.base.Facing;
 import team.creative.creativecore.common.util.math.box.AlignedBox;
@@ -25,6 +27,11 @@ public class FrameBlock extends DisplayBlock {
     @Override
     public DirectionProperty getFacing() {
         return BlockStateProperties.FACING;
+    }
+
+    @Override
+    public PermissionNode<Boolean> getPermissionNode() {
+        return WFRegistry.PERM_DISPLAYS_INTERACT_FRAME;
     }
 
     @Override

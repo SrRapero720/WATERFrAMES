@@ -21,7 +21,7 @@ public class WidgetURLTextField extends GuiTextfield {
         super(DisplayData.URL);
         this.setMaxStringLength(2048);
         this.setSuggestion("https://i.imgur.com/1yCDs5C.mp4");
-        this.setText(tile.data.uri != null ? tile.data.uri.toString() : "");
+        this.setText(tile.data.hasUri() ? tile.data.uri.toString() : "");
     }
 
     @Override

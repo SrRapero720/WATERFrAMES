@@ -1,6 +1,7 @@
 package me.srrapero720.waterframes.common.block;
 
 import me.srrapero720.waterframes.WFConfig;
+import me.srrapero720.waterframes.WFRegistry;
 import me.srrapero720.waterframes.common.block.entity.DisplayTile;
 import me.srrapero720.waterframes.common.item.RemoteControl;
 import me.srrapero720.waterframes.common.screens.DisplayScreen;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.material.*;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import org.joml.Vector3f;
 import team.creative.creativecore.common.gui.GuiLayer;
 import team.creative.creativecore.common.gui.creator.BlockGuiCreator;
@@ -61,6 +63,10 @@ public abstract class DisplayBlock extends BaseEntityBlock implements BlockGuiCr
     }
 
     public abstract DirectionProperty getFacing();
+
+    public PermissionNode<Boolean> getPermissionNode() {
+        return WFRegistry.PERM_DISPLAYS_INTERACT;
+    }
 
     @Override
     public GuiLayer create(CompoundTag tag, Level level, BlockPos blockPos, BlockState blockState, Player player) {
@@ -100,7 +106,7 @@ public abstract class DisplayBlock extends BaseEntityBlock implements BlockGuiCr
             }
         }
 
-        if (!level.isClientSide && WFConfig.canInteractBlock(player)) GuiCreator.BLOCK_OPENER.open(player, pos);
+        if (!level.isClientSide && WFConfig.canInteractBlock(player, this)) GuiCreator.BLOCK_OPENER.open(player, pos);
         return InteractionResult.SUCCESS;
     }
 

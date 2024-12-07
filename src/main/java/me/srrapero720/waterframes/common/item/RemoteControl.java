@@ -19,7 +19,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -52,7 +51,7 @@ public class RemoteControl extends Item implements ItemGuiCreator {
             return InteractionResultHolder.fail(stack);
         }
 
-        if (!WFConfig.canInteractItem(player)) {
+        if (!WFConfig.canInteractRemote(player)) {
             this.sendFatal(player, Component.translatable("waterframes.common.access.denied"));
             return InteractionResultHolder.fail(stack);
         }
@@ -107,7 +106,7 @@ public class RemoteControl extends Item implements ItemGuiCreator {
             return InteractionResult.PASS;
         }
 
-        if (!WFConfig.canInteractItem(player)) {
+        if (!WFConfig.canBindRemote(player)) {
             this.sendFatal(player, Component.translatable("waterframes.common.access.denied"));
             return InteractionResult.FAIL;
         }
@@ -166,7 +165,7 @@ public class RemoteControl extends Item implements ItemGuiCreator {
     @Override
     public GuiLayer create(CompoundTag tag, Player player) {
         int[] pos = this.getPosition(tag);
-        var blockPos = new BlockPos((int) pos[0], (int) pos[1], (int) pos[2]);
+        var blockPos = new BlockPos(pos[0], pos[1], pos[2]);
         return new RemoteControlScreen(player, (DisplayTile) player.level.getBlockEntity(blockPos), tag, this);
     }
 

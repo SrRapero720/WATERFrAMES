@@ -39,7 +39,7 @@ public class WidgetStatusIcon extends GuiIcon {
             return tooltip;
         }
 
-        if (tile.imageCache == null && tile.data.uri == null) {
+        if (tile.imageCache == null && !tile.data.hasUri()) {
             tooltip.add(translatable("waterframes.status", ChatFormatting.AQUA + translate("waterframes.status.idle")));
             tooltip.add(translatable("waterframes.status.idle.desc"));
             return tooltip;
@@ -81,7 +81,7 @@ public class WidgetStatusIcon extends GuiIcon {
     @OnlyIn(Dist.CLIENT)
     public Icon getStatusIcon() {
         if (!tile.data.active) return IconStyles.STATUS_OFF;
-        if (tile.imageCache == null && tile.data.uri == null) return IconStyles.STATUS_IDLE;
+        if (tile.imageCache == null && !tile.data.hasUri()) return IconStyles.STATUS_IDLE;
         else if (tile.imageCache == null) return IconStyles.STATUS_LOADING; // ASSUMING IT WAS LOADING
         return switch (tile.imageCache.getStatus()) {
             case READY -> {

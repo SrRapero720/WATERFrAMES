@@ -214,7 +214,7 @@ public class WaterFramesCommand {
 
         URI uri = WaterFrames.createURI(url);
 
-        if (tile.data.uri != null && tile.data.uri.equals(uri)) {
+        if (tile.data.hasUri() && tile.data.uri.equals(uri)) {
             tile.data.tick = 0;
             tile.data.tickMax = -1;
         }

@@ -1,5 +1,6 @@
 package me.srrapero720.waterframes.common.block;
 
+import me.srrapero720.waterframes.WFRegistry;
 import me.srrapero720.waterframes.common.block.entity.BigTvTile;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import team.creative.creativecore.common.util.math.base.Axis;
 import team.creative.creativecore.common.util.math.base.Facing;
 import team.creative.creativecore.common.util.math.box.AlignedBox;
@@ -23,6 +25,11 @@ public class BigTvBlock extends DisplayBlock {
     @Override
     public DirectionProperty getFacing() {
         return BlockStateProperties.HORIZONTAL_FACING;
+    }
+
+    @Override
+    public PermissionNode<Boolean> getPermissionNode() {
+        return WFRegistry.PERM_DISPLAYS_INTERACT_TV;
     }
 
     public static AlignedBox box(Direction direction, Direction attachedFace, boolean renderMode) {

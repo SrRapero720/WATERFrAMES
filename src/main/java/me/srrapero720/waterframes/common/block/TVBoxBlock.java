@@ -1,5 +1,6 @@
 package me.srrapero720.waterframes.common.block;
 
+import me.srrapero720.waterframes.WFRegistry;
 import me.srrapero720.waterframes.common.block.entity.TVBoxTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import org.jetbrains.annotations.Nullable;
 import team.creative.creativecore.common.util.math.base.Axis;
 import team.creative.creativecore.common.util.math.base.Facing;
@@ -33,6 +35,11 @@ public class TVBoxBlock extends DisplayBlock {
     @Override
     public DirectionProperty getFacing() {
         return BlockStateProperties.HORIZONTAL_FACING;
+    }
+
+    @Override
+    public PermissionNode<Boolean> getPermissionNode() {
+        return WFRegistry.PERM_DISPLAYS_INTERACT_TV;
     }
 
     public static AlignedBox box(Direction direction, boolean renderMode) {

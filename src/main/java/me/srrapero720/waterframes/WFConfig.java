@@ -1,5 +1,6 @@
 package me.srrapero720.waterframes;
 
+import me.srrapero720.waterframes.common.block.DisplayBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,11 +12,15 @@ import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class WFConfig {
+    private static final Pattern HOSTS_PATTERN = Pattern.compile("^(?!-)([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z]{2,63}$");
+
     private static final Builder SERVER = new Builder();
     private static final Builder CLIENT = new Builder();
 
@@ -78,10 +83,16 @@ public class WFConfig {
     private static final IntValue remoteDistance;
 
     // PERMISSIONS
+    private static final BooleanValue usePermissionsAPI;
     private static final BooleanValue useInAdventure;
     private static final BooleanValue useInSurvival;
     private static final BooleanValue useForAnyone;
+    private static final BooleanValue useBindingRemotes;
+    private static final BooleanValue useRemotes;
     private static final BooleanValue useWhitelist;
+    private static final BooleanValue blackWhitelist;
+    private static final BooleanValue allowSaving;
+
     private static final ConfigValue<List<? extends String>> whitelist;
 
     // OVERRIDES (client)
@@ -191,6 +202,14 @@ public class WFConfig {
         SERVER.comment("Configurations related to permissions");
         SERVER.pop().push("permissions");
 
+        usePermissionsAPI = SERVER
+                .comment(
+                        "Enables Permission API integration [(Neo)Forge only]",
+                        "(Neo)Forge provides its own permissions API compatible with permissions mods like Luckperms or FTB Ranks",
+                        "This config enables integrations and ignores all below settings"
+                )
+                .define("usePermissionsAPI", false);
+
         useInAdventure = SERVER
                 .comment("Changes if players in Adventure mode can use displays")
                 .define("usableInAdventureMode", false);
@@ -202,18 +221,35 @@ public class WFConfig {
                 .comment("Changes if any player can use displays, otherwise only admins can use it")
                 .define("usableForAnyone", true);
 
+        allowSaving = SERVER
+                .comment("Allow saving for anyone without OP permissions")
+                .define("allowSaving", true);
+
+        useRemotes = SERVER
+                .comment("Allow interacting (open gui) for all remotes")
+                .define("usableRemote", true);
+
+        useBindingRemotes = SERVER
+                .comment("Allow binding remotes on any display")
+                .define("usableRemoteBinding", true);
+
         SERVER.comment("Whitelist configuration: please stop bugging me with this :(");
         SERVER.push("whitelist");
 
         useWhitelist = SERVER
                 .comment(
                         "Enables whitelist feature",
-                        "[WARNING]: THE AUTHOR OF THE MOD IS NOT RESPONSIBLE IF IN YOUR SERVER SOMEONE PUTS NSFW MEDIA",
-                        "WATERMEDIA HAVE SUPPORT FOR ADULT PAGES AND WHITELIST WAS DESIGNED TO PREVENT THAT"
+                        "[WARNING]: THE AUTHOR OF THE MOD (SRRAPERO720) IS NOT RESPONSIBLE IF IN YOUR SERVER SOMEONE PUTS NSFW MEDIA",
+                        "WATERMEDIA HAVE SUPPORT FOR ADULT PAGES AND WHITELIST WAS DESIGNED TO PREVENT THAT",
+                        "MIMIMIMI THE KIDS, SHUT UP, I GIVE YOU THE OPTIONS ENABLED _BY DEFAULT_ TO PREVENT THAT"
                 )
                 .define("enable", true);
 
-        whitelist = SERVER.defineList("urls", Arrays.asList(WHITELIST), o -> true);
+        blackWhitelist = SERVER
+                .comment("Moves the whitelist into the darkside")
+                .define("blacklistMode", false);
+
+        whitelist = SERVER.defineList("urls", Arrays.asList(WHITELIST), o -> HOSTS_PATTERN.matcher((String) o).find());
 
         SERVER.pop();
 
@@ -340,17 +376,15 @@ public class WFConfig {
         // watermedia driven protocol
         if (uri.getAuthority().equals("water")) return true;
 
-        try {
-            var host = uri.getHost();
-            if (host == null) return false;
+        var host = uri.getHost();
+        if (host == null) return false;
 
-            for (var s: whitelist.get()) {
-                if (host.endsWith("." + s) || host.equals(s)) {
-                    return true;
-                }
+        for (var s: whitelist.get()) {
+            if (host.endsWith("." + s) || host.equals(s)) {
+                return !blackWhitelist.get();
             }
-        } catch (Exception ignored) {}
-        return false;
+        }
+        return blackWhitelist.get();
     }
     public static <T> Set<T> mutableSet(Iterator<T> it) {
         var list = new HashSet<T>();
@@ -361,53 +395,85 @@ public class WFConfig {
     }
 
     public static boolean canSave(Player player, String url) {
-        if (isAdmin(player)) return true;
+        URI uri = WaterFrames.createURI(url);
+        boolean valid = uri != null || url.isEmpty();
+        if (usePermissionsAPI.get()) {
+            boolean canSave = WFRegistry.getPermBoolean(player.getUUID(), WFRegistry.PERM_DISPLAYS_EDIT);
+            boolean canBypass = WFRegistry.getPermBoolean(player.getUUID(), WFRegistry.PERM_WHITELIST_BYPASS);
+            boolean whitelisted = isWhiteListed(uri);
 
-        try {
-            URI uri = WaterFrames.createURI(url);
-            if (uri == null) return false;
-            return url.isEmpty() || isWhiteListed(uri);
-        } catch (Exception e) {
+            if (canSave && (whitelisted || canBypass)) {
+                return valid;
+            }
+
             return false;
+        } else {
+            boolean canSave = allowSaving.get();
+            if (isAdmin(player)) return valid;
+            if (url.isEmpty()) return true;
+            return valid && canSave && isWhiteListed(uri);
         }
     }
 
-    public static boolean canInteractBlock(Player player) {
-        GameType gameType = (player instanceof ServerPlayer serverPlayer)
-                ? serverPlayer.gameMode.getGameModeForPlayer()
-                : Minecraft.getInstance().gameMode.getPlayerMode();
+    public static boolean canInteractBlock(Player player, DisplayBlock block) {
+        if (usePermissionsAPI.get()) {
+            PermissionNode<Boolean> NODE = block.getPermissionNode();
 
-        if (isAdmin(player)) return true;
-        if (!useInSurv() && gameType.equals(GameType.SURVIVAL)) return false;
-        if (!useInAdv() && gameType.equals(GameType.ADVENTURE)) return false;
+            return WFRegistry.getPermBoolean(player.getUUID(), WFRegistry.PERM_DISPLAYS_INTERACT) || WFRegistry.getPermBoolean(player.getUUID(), NODE);
+        } else {
+            GameType gameType = (player instanceof ServerPlayer serverPlayer)
+                    ? serverPlayer.gameMode.getGameModeForPlayer()
+                    : Minecraft.getInstance().gameMode.getPlayerMode();
+
+            if (isAdmin(player)) return true;
+            if (!useInSurv() && gameType.equals(GameType.SURVIVAL)) return false;
+            if (!useInAdv() && gameType.equals(GameType.ADVENTURE)) return false;
+        }
 
         return useForAnyone();
     }
 
-    public static boolean canInteractItem(Player player) {
-        if (isAdmin(player)) return true;
-        return useForAnyone();
+    public static boolean canInteractRemote(Player player) {
+        if (usePermissionsAPI.get()) {
+            return WFRegistry.getPermBoolean(player.getUUID(), WFRegistry.PERM_REMOTE_INTERACT) || isOwner(player);
+        } else {
+            if (isAdmin(player)) return true;
+            return useRemotes.get();
+        }
+    }
+
+    public static boolean canBindRemote(Player player) {
+        if (usePermissionsAPI.get()) {
+            return WFRegistry.getPermBoolean(player.getUUID(), WFRegistry.PERM_REMOTE_BIND) || isOwner(player);
+        } else {
+            if (isAdmin(player)) return true;
+            return useBindingRemotes.get();
+        }
     }
 
     public static boolean isAdmin(Player player) {
         Level level = player.level;
 
         // OWNER
-        String name = player.getGameProfile().getName();
-        if (name.equals("SrRaapero720") || name.equals("SrRapero720")) {
-            return true;
-        }
+        boolean owner = isOwner(player);
+        if (owner) return true;
 
         if (level.isClientSide()) { // validate if was singleplayer and if was the admin
             IntegratedServer integrated = Minecraft.getInstance().getSingleplayerServer();
             if (integrated != null) {
                 return integrated.isSingleplayerOwner(player.getGameProfile()) || player.hasPermissions(integrated.getOperatorUserPermissionLevel());
-            } else { // is a guest, check perms
+            } else { // its a guest, check perms
                 return player.hasPermissions(4);
             }
         } else {
             return player.hasPermissions(4);
         }
+    }
+
+    public static boolean isOwner(Player player) {
+        // OWNER
+        String name = player.getGameProfile().getName();
+        return name.equals("SrRaapero720") || name.equals("SrRapero720");
     }
 
     public static boolean isDevMode() {

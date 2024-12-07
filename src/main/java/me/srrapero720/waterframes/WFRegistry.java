@@ -7,6 +7,10 @@ import me.srrapero720.waterframes.common.block.entity.*;
 import me.srrapero720.waterframes.common.commands.WaterFramesCommand;
 import me.srrapero720.waterframes.common.item.RemoteControl;
 import me.srrapero720.waterframes.common.network.packets.*;
+import net.minecraftforge.server.permission.PermissionAPI;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionTypes;
 import org.watermedia.api.image.ImageAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
@@ -34,6 +38,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import static me.srrapero720.waterframes.common.network.DisplayNetwork.*;
@@ -44,7 +49,7 @@ import static org.watermedia.WaterMedia.IT;
 public class WFRegistry {
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ID);
-    private static final DeferredRegister<Block> BLOCKS =  DeferredRegister.create(ForgeRegistries.BLOCKS, ID);
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, ID);
     private static final DeferredRegister<BlockEntityType<?>> TILES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ID);
 
     /* BLOCKS */
@@ -82,6 +87,27 @@ public class WFRegistry {
             .build()
     );
 
+    /* PERMISSIONS */
+    public static final PermissionNode<Boolean>
+            PERM_DISPLAYS_EDIT = permission("waterframes.displays.save", false, "Save changes on displays", "Allows saving whitelisted URLs"),
+            PERM_DISPLAYS_INTERACT = permission("waterframes.displays.interact", true, "Interact with displays", "Allows interact (open) the Gui of all displays"),
+            PERM_DISPLAYS_INTERACT_FRAME = permission("waterframes.displays.interact.frame", true, "Interact with frame display", "Allows interact (open) the Gui of frame display"),
+            PERM_DISPLAYS_INTERACT_PROJECTOR = permission("waterframes.displays.interact.projector", true, "Interact with frame display", "Allows interact (open) the Gui of projector display"),
+            PERM_DISPLAYS_INTERACT_TV = permission("waterframes.displays.interact.tv", true, "Interact with frame display", "Allows interact (open) the Gui of tv display"),
+            PERM_REMOTE_INTERACT = permission("waterframes.remote.interact", true, "Interact with remotes", "Allows interact (open) the Gui of remotes"),
+            PERM_REMOTE_BIND = permission("waterframes.remote.bind", true, "Bind remotes to displays", "Allows bind displays on remotes"),
+            PERM_WHITELIST_BYPASS = permission("waterframes.whitelist.bypass", false, "Bypass whitelisted URLS", "Allows to bypass whitelisted URLS");
+
+    @SuppressWarnings("unchecked")
+    private static PermissionNode<Boolean> permission(String node, boolean def, String title, String desc) {
+        return new PermissionNode<>(WaterFrames.ID, node, PermissionTypes.BOOLEAN, (player, uuid, context) -> def)
+                .setInformation(Component.literal(title), Component.literal(desc));
+    }
+
+    public static boolean getPermBoolean(UUID player, PermissionNode<Boolean> node) {
+        return PermissionAPI.getOfflinePermission(player, node);
+    }
+
     private static RegistryObject<BlockEntityType<DisplayTile>> tile(String name, BlockEntityType.BlockEntitySupplier<DisplayTile> creator, Supplier<DisplayBlock> block) {
         return TILES.register(name, () -> BlockEntityType.Builder.of(creator, block.get()).build(null));
     }
@@ -99,6 +125,20 @@ public class WFRegistry {
         ITEMS.register(bus);
         TILES.register(bus);
         TABS.register(bus);
+    }
+
+    @SubscribeEvent
+    public static void registerPermissions(PermissionGatherEvent.Nodes e) {
+        e.addNodes(
+                PERM_DISPLAYS_EDIT,
+                PERM_DISPLAYS_INTERACT,
+                PERM_DISPLAYS_INTERACT_FRAME,
+                PERM_DISPLAYS_INTERACT_PROJECTOR,
+                PERM_DISPLAYS_INTERACT_TV,
+                PERM_REMOTE_BIND,
+                PERM_REMOTE_INTERACT,
+                PERM_WHITELIST_BYPASS
+        );
     }
 
     @SubscribeEvent
