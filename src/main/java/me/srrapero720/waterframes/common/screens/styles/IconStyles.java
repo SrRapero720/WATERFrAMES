@@ -16,7 +16,6 @@ public class IconStyles {
     public static final Icon VOLUME_OVERFLOW = create(0, 5);
     public static final Icon VOLUME_RANGE_MIN = create(0, 6);
     public static final Icon VOLUME_RANGE_MAX = create(0, 7);
-    public static final Icon VOLUME_MUTE = create(0, 8);
 
     public static final Icon POS_ICON = create(0, 12);
     public static final Icon POS_BASE = create(0, 13, 3, 3);
@@ -98,7 +97,7 @@ public class IconStyles {
     }
 
     public static Icon getVolumeIcon(int volume, boolean muted) {
-        if (muted) return VOLUME_MUTE;
+        if (muted) return VOLUME_0;
         if (volume > 100) {
             return IconStyles.VOLUME_OVERFLOW;
         } else if (volume >= 90){
