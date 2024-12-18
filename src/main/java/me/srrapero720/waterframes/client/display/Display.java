@@ -37,6 +37,10 @@ public class Display {
     private boolean synced = false;
     private boolean released = false;
 
+    // SEEK CONTROL (WHEN SLAVISM MODE IS ENABLED)
+    private long seekTime;
+    private long lastSeekingTime;
+
     public Display(DisplayTile tile) {
         this.tile = tile;
         this.imageCache = tile.imageCache;
@@ -168,6 +172,10 @@ public class Display {
                 if (this.mediaPlayer.isBroken()) break;
                 int volume = rangedVol(this.tile.data.volume, this.tile.data.minVolumeDistance, this.tile.data.maxVolumeDistance);
 
+                if (!seeking() && this.seekTime != 0) {
+                    this.seekTo(this.seekTime);
+                }
+
                 if (this.currentVolume != volume) this.mediaPlayer.setVolume(this.currentVolume = volume);
                 if (this.mediaPlayer.isSafeUse() && this.mediaPlayer.isValid()) {
                     if (this.mediaPlayer.getRepeatMode() != tile.data.loop) this.mediaPlayer.setRepeatMode(tile.data.loop);
@@ -184,9 +192,9 @@ public class Display {
                             time = (time == 0 || mediaDuration == 0) ? 0 : Math.floorMod(time, this.mediaPlayer.getMediaInfoDuration());
                         }
 
-                        if (Math.abs(time - mediaPlayer.getTime()) > WaterFrames.SYNC_TIME && Math.abs(time - currentLastTime) > WaterFrames.SYNC_TIME) {
+                        if (Math.abs(time - mediaPlayer.getTime()) > (WFConfig.useSlavismMode() ? 10000 : WaterFrames.SYNC_TIME) && Math.abs(time - currentLastTime) > (WFConfig.useSlavismMode() ? 10000 : WaterFrames.SYNC_TIME)) {
                             this.currentLastTime = time;
-                            this.mediaPlayer.seekTo(time);
+                            this.seekTo(time);
                         }
                     }
                 }
@@ -196,6 +204,20 @@ public class Display {
             this.syncDuration();
             this.synced = true;
         }
+    }
+
+    private void seekTo(long time) {
+        if (WFConfig.useSlavismMode() && this.seeking()) {
+            this.seekTime = time;
+        } else {
+            this.mediaPlayer.seekTo(time);
+            this.lastSeekingTime = System.currentTimeMillis();
+            this.seekTime = 0;
+        }
+    }
+
+    public boolean seeking() {
+        return this.lastSeekingTime + 10000 > System.currentTimeMillis();
     }
 
     public boolean isReady() {
@@ -243,7 +265,7 @@ public class Display {
         switch (displayMode) {
             case PICTURE -> {}
             case VIDEO, AUDIO -> {
-                mediaPlayer.seekTo(MathAPI.tickToMs(this.tile.data.tick));
+                this.seekTo(MathAPI.tickToMs(this.tile.data.tick));
                 mediaPlayer.setPauseMode(pause);
                 mediaPlayer.setMuteMode(this.tile.data.muted);
             }

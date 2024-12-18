@@ -1,6 +1,7 @@
 package me.srrapero720.waterframes.common.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -185,6 +186,12 @@ public class WaterFramesCommand {
                 )
                 .then(Commands.literal("toggle")
                         .executes(c -> whitelist$toggle(c.getSource()))
+                )
+        );
+
+        waterframes.then(Commands.literal("slavism")
+                .then(Commands.argument("enable", BoolArgumentType.bool())
+                        .executes(c -> slavistMode(c.getSource(), BoolArgumentType.getBool(c, "enable")))
                 )
         );
 
@@ -438,6 +445,16 @@ public class WaterFramesCommand {
         }
 
         return players.size();
+    }
+
+    public static int slavistMode(CommandSourceStack source, boolean enabled) {
+        WFConfig.useSlavismMode(enabled);
+        source.sendSuccess(msgSuccess("waterframes.commands.slavist.success", enabled ? ACTIVATED : DEACTIVATED), true);
+
+        for(ServerPlayer p: source.getServer().getPlayerList().getPlayers()) {
+            p.connection.disconnect(Component.translatable("multiplayer.disconnect.generic"));
+        }
+        return 0;
     }
 
     public static int whitelist$toggle(CommandSourceStack source) {

@@ -71,6 +71,7 @@ public class WFConfig {
     private static final BooleanValue useMasterVolume;
     private static final BooleanValue useVSEurekaCompat;
     private static final BooleanValue useMultimedia;
+    private static final BooleanValue useSlavismMode;
     private static final BooleanValue keepRendering;
     // BEHAVIOR
     private static final BooleanValue useLightsOnPlay;
@@ -98,6 +99,7 @@ public class WFConfig {
     private final static BooleanValue overrideServerConfig;
     private static final BooleanValue clientUseMultimedia;
     private static final BooleanValue clientKeepsRendering;
+    private static final BooleanValue clientSlavistMode;
     private static final BooleanValue forceDevMode;
 
     private static final ForgeConfigSpec SERVER_SPEC;
@@ -159,6 +161,16 @@ public class WFConfig {
         useMultimedia = SERVER
                 .comment("Enables VLC/FFMPEG usage for multimedia processing like videos and music (support added by WATERMeDIA)")
                 .define("enable", true);
+
+        useSlavismMode = SERVER
+                .comment(
+                        "Force-enable WATERMeDIA's slavism mode, slavism enhances youtube quality",
+                        "This option comes with 3 downsides:",
+                        "1: Playback gets way unstable",
+                        "2: Sync time is increased to 10 seconds (less sync for all players)",
+                        "3: You can only manually sync every 10 seconds after a seek"
+                )
+                .define("slavismMode", false);
 
         // WATERFRAMES -> block_behavior
         SERVER.comment("Configuration related to interactions with vanilla and modded features");
@@ -280,6 +292,13 @@ public class WFConfig {
                 )
                 .define("keepRendering", false);
 
+        clientSlavistMode = CLIENT
+                .comment(
+                        "overrides 'waterframes.multimedia.slavistMode'",
+                        "Force-enable WATERMeDIA's slavist mode, slavism enhances youtube quality at the cost of have unstable playback"
+                )
+                .define("slavistMode", false);
+
         forceDevMode = CLIENT
                 .comment(
                         "WARNING: DO NOT CHANGE IT EXCEPT IF YOU KNOW WHAT ARE YOU DOING, TOGGLING IT ON MAY CAUSE CORRUPTIONS, UNEXPECTED BEHAVIORS OR WORLD DESTRUCTION",
@@ -330,6 +349,8 @@ public class WFConfig {
     public static int maxVol(int value) { return Math.max(Math.min(value, maxVol()), 0); }
 
     public static boolean useMultimedia() { return overrideServerConfig.get() ? clientUseMultimedia.get() : useMultimedia.get(); }
+    public static boolean useSlavismMode() { return overrideServerConfig.get() ? clientSlavistMode.get() : useSlavismMode.get(); }
+    public static void useSlavismMode(boolean value) { useSlavismMode.set(value); }
 
     // BEHAVIOR
     public static boolean useRedstone() { return useRedstone.get(); }

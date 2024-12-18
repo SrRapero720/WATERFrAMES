@@ -1,5 +1,6 @@
 package me.srrapero720.waterframes.client.display;
 
+import me.srrapero720.waterframes.WFConfig;
 import me.srrapero720.waterframes.WaterFrames;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -7,6 +8,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.watermedia.WaterMedia;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = WaterFrames.ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @OnlyIn(Dist.CLIENT)
@@ -97,6 +99,13 @@ public class DisplayList {
     public static void onUnloadingLevel(LevelEvent.Unload event) {
         LevelAccessor level = event.getLevel();
         if (level != null && level.isClientSide()) DisplayList.release();
+    }
+
+    @SubscribeEvent
+    public static void onLoadingLevel(LevelEvent.Load event) {
+        if (event.getLevel() != null && event.getLevel().isClientSide()) {
+            WaterMedia.setSlavismMode(WFConfig.useSlavismMode());
+        }
     }
 
     // @SubscribeEvent
