@@ -6,6 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import team.creative.creativecore.common.network.CreativePacket;
 
+import static me.srrapero720.waterframes.WaterFrames.LOGGER;
+
 public abstract class DisplayDataPacket extends CreativePacket {
     public BlockPos pos; // display pos
     public DisplayDataPacket() {}
@@ -26,6 +28,8 @@ public abstract class DisplayDataPacket extends CreativePacket {
             } else {
                 this.execServer(tile, (ServerPlayer) player);
             }
+        } else {
+            LOGGER.error("Received packet '{}' pointing to a invalid DisplayTile position {}", this.getClass().getSimpleName(), pos);
         }
     }
 
