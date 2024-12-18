@@ -1,3 +1,11 @@
+# UPDATE 2.1.9
+- ✨ Added slavism mode configuration
+  - ✨ Integrated in server-side config (waterframes.multimedia.slavismMode)
+  - ✨ Added too a override config option on server-side config
+  - ✨ Added command `/waterframes slavism <enabled/disabled>`
+- 🛠️ Added `tenor.com` on the default whitelist
+- 🐛 Fixed compatibility with latest version of creativecore
+
 # UPDATE 2.1.8
 - 🌐 Added translation
   - 🇧🇷 Brazil (by jmsgfhr)
