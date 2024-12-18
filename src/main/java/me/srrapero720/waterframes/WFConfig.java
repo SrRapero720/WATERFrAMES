@@ -35,6 +35,7 @@ public class WFConfig {
             "staticflickr.com",
             "flic.kr",
             "tenor.co",
+            "tenor.com",
             "gfycat.com",
             "giphy.com",
             "gph.is",
